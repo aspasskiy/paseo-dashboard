@@ -1,0 +1,16 @@
+{
+  "id": "dashboard",
+  "name": "Dashboard",
+  "icon": "assets/icon.png",
+  "description": "Your work with coding agents at a glance: a year-long activity heatmap, weekly stats across agent CLIs, project focus, and an agent-written report of what you shipped and what needs you.",
+  "media": [
+    "media/1-overview.png",
+    "media/2-report.png",
+    "media/3-focus-30d.png",
+    "media/4-customize.png",
+    "media/5-light.png"
+  ],
+  "requirements": {
+    "paseo": ">=0.16.2"
+  }
+}

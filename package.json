@@ -1,0 +1,42 @@
+{
+  "name": "paseo-dashboard",
+  "private": true,
+  "version": "0.0.2",
+  "author": "aspasskiy",
+  "description": "Your work with coding agents at a glance: a year-long activity heatmap, weekly stats across agent CLIs, project focus, and an agent-written report of what you shipped and what needs you.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aspasskiy/paseo-dashboard.git"
+  },
+  "homepage": "https://github.com/aspasskiy/paseo-dashboard#readme",
+  "type": "module",
+  "files": [
+    "paseo-plugin.json",
+    "OVERVIEW.md",
+    "OVERVIEW.*.md",
+    "media/*.png",
+    "assets/icon.png",
+    "assets/icon.svg",
+    "index.client.tsx",
+    "index.server.ts",
+    "client/",
+    "server/",
+    "shared/",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@getpaseo/plugin": "0.16.2",
+    "@tanstack/react-query": "^5.90.11",
+    "@types/node": "^22.20.5",
+    "@types/react": "~19.2.0",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "typescript": "^5.9.3",
+    "zod": "^4.4.3"
+  }
+}
