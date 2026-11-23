@@ -1,10 +1,32 @@
-<img src="assets/icon.png" width="96" height="96" alt="Paseo Dashboard icon">
+<p align="center">
+  <img src="assets/icon.png" width="96" height="96" alt="Paseo Dashboard icon">
+</p>
 
-# Paseo Dashboard
+<h1 align="center">Paseo Dashboard</h1>
 
-A home screen plugin for [Paseo](https://paseo.sh): how you work with coding agents, across every agent CLI on the machine.
+<p align="center">
+  A home screen plugin for <a href="https://paseo.sh">Paseo</a>: how you work with coding agents, across every agent CLI on the machine.
+</p>
 
-Open it from **Dashboard** at the top of the sidebar or with "Open Dashboard" in the command center.
+<p align="center">
+  <img src="media/1-overview.png" alt="Dashboard with a year-long activity heatmap, weekly stat tiles and project focus">
+</p>
+
+## Install
+
+Requires Paseo 0.16.2 or newer, with **Enable plugins** turned on under **Settings → Plugins**.
+
+From the terminal:
+
+```sh
+paseo plugin add git:aspasskiy/paseo-dashboard
+```
+
+Or in the app: open **Settings → Plugins**, paste `git:aspasskiy/paseo-dashboard` into **Plugin source** and select **Install plugin**.
+
+Then open it from **Dashboard** at the top of the sidebar or with "Open Dashboard" in the command center.
+
+To update later: `paseo plugin update dashboard`.
 
 ## What's on it
 
@@ -15,13 +37,18 @@ Open it from **Dashboard** at the top of the sidebar or with "Open Dashboard" in
 
 Blocks sit on a 12-column grid you can rearrange, resize, add and remove.
 
-## Install
+## Screenshots
 
-Requires Paseo 0.16.2 or newer. In Paseo, add a plugin from its Git URL:
-
-```
-https://github.com/aspasskiy/paseo-dashboard
-```
+<table>
+  <tr>
+    <td width="50%"><img src="media/2-report.png" alt="Agent-written report: Needs you and Shipped"><br><sub>Agent-written report: what needs you and what shipped</sub></td>
+    <td width="50%"><img src="media/3-focus-30d.png" alt="Project focus over the last 30 days"><br><sub>Where your focus went, last 30 days</sub></td>
+  </tr>
+  <tr>
+    <td width="50%"><img src="media/4-customize.png" alt="Editing the layout: drag to rearrange, drag the edge to resize"><br><sub>Rearrange and resize blocks</sub></td>
+    <td width="50%"><img src="media/5-light.png" alt="Dashboard in the light theme"><br><sub>Light theme</sub></td>
+  </tr>
+</table>
 
 ## Data and privacy
 
@@ -37,6 +64,8 @@ Plugin state (layout, report and its cache) lives in `~/.paseo/plugin-data/dashb
 npm install
 npm run typecheck
 ```
+
+To try a local checkout: `paseo plugin install /absolute/path/to/paseo-dashboard`.
 
 Layout:
 
