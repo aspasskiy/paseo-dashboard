@@ -9,6 +9,7 @@ import {
 } from "../../shared/report";
 import { readJson, writeJson } from "../paths";
 import { settingsFile } from "./store";
+import { toolFreeProfile } from "./toolfree";
 
 type PaseoApi = PluginHandlerContext["paseo"];
 
@@ -23,8 +24,6 @@ export interface ResolvedRunner {
   modelLabel: string | null;
   /** Picked automatically (no saved model, or the saved one is gone). */
   auto: boolean;
-  /** The provider's most restrictive mode (read-only / plan), so a helper can't edit files or run commands. */
-  safeModeId: string | null;
 }
 
 const DEFAULT_SETTINGS: ReportSettings = {
@@ -37,34 +36,14 @@ export async function readSettings(): Promise<ReportSettings> {
   return parsed.success ? parsed.data : DEFAULT_SETTINGS;
 }
 
-/** Mode ids per provider, from the last snapshot (server-only; not part of the RPC contract). */
-const providerModes = new Map<string, string[]>();
-
 /**
- * Helpers only summarize text they are given. Session text is untrusted (it may contain anything a user
- * pasted), so run them in the provider's most restrictive mode when it has one: plan/read-only first.
+ * Enabled providers whose CLI is installed and signed in, in Paseo's own order, and that can run a
+ * helper with no tools (see toolfree.ts). Others are left out: the report never runs on them.
  */
-const SAFE_MODES = [/^plan$/i, /read[-_ ]?only/i, /^ask$/i, /suggest/i, /^default$/i];
-function safeModeFor(providerId: string): string | null {
-  const modes = providerModes.get(providerId) ?? [];
-  for (const re of SAFE_MODES) {
-    const hit = modes.find((m) => re.test(m) || re.test(m.split(/[#/]/).pop() ?? ""));
-    if (hit) return hit;
-  }
-  return null;
-}
-
-/** Enabled providers whose CLI is installed and signed in, in Paseo's own order. */
 export async function readyProviders(paseo: PaseoApi): Promise<ProviderOption[]> {
   const snapshot = await paseo.providers.snapshot();
-  for (const e of snapshot.entries) {
-    const modes = ((e as { modes?: Array<{ id?: string } | string> }).modes ?? [])
-      .map((m) => (typeof m === "string" ? m : m.id ?? ""))
-      .filter(Boolean);
-    providerModes.set(e.provider, modes);
-  }
   return snapshot.entries
-    .filter((e) => e.enabled && e.status === "ready")
+    .filter((e) => e.enabled && e.status === "ready" && e.source !== "custom" && toolFreeProfile(e.provider))
     .map((e) => ({
       id: e.provider,
       label: e.label || e.provider,
@@ -99,8 +78,11 @@ function autoModel(provider: ProviderOption, tier: Tier): Model | null {
 
 /** Pure: the runner a stage would use with these settings and these ready providers. */
 export function resolveRunner(providers: ProviderOption[], settings: ReportSettings, tier: Tier): ResolvedRunner | null {
+  // Only tool-free providers, whatever the list or the saved settings say: a saved choice of a
+  // provider that has no profile falls back to the first one that has.
+  const usable = providers.filter((p) => toolFreeProfile(p.id));
   const choice = settings[tier];
-  const provider = (choice.provider && providers.find((p) => p.id === choice.provider)) || providers[0];
+  const provider = (choice.provider && usable.find((p) => p.id === choice.provider)) || usable[0];
   if (!provider) return null;
   const saved = provider.id === choice.provider && choice.model ? provider.models.find((m) => m.id === choice.model) : undefined;
   const model = saved ?? autoModel(provider, tier);
@@ -110,13 +92,12 @@ export function resolveRunner(providers: ProviderOption[], settings: ReportSetti
     model: model?.id ?? null,
     modelLabel: model?.label ?? null,
     auto: !saved,
-    safeModeId: safeModeFor(provider.id),
   };
 }
 
 /** "Claude · Haiku 5.5"; "Claude · default model" when the provider picks. */
 export function runnerLabel(r: ResolvedRunner | null): string {
-  if (!r) return "No provider ready";
+  if (!r) return "No supported provider ready";
   return r.providerLabel + " · " + (r.modelLabel ?? "default model");
 }
 

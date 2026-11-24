@@ -56,6 +56,8 @@ Everything is read on the daemon host. Activity comes from the session stores of
 
 The **report** is the exception. When you generate one, Paseo helper agents read your session transcripts for the period and summarise them, with the provider and model you choose in the report settings. The text goes to that provider like any other agent prompt and uses your agent quota.
 
+Report helpers start with no tools: no shell, no file access, no web, no MCP servers, no skills. They only read the text they are given and answer, so instructions inside a transcript cannot make them act. The restriction is enforced by the provider's CLI, so reports run only on a provider that supports it, for now Claude (Claude Code); other providers are not offered in the report settings.
+
 Plugin state (layout, report and its cache) lives in `~/.paseo/plugin-data/dashboard/`.
 
 ## Development

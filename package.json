@@ -1,7 +1,7 @@
 {
   "name": "paseo-dashboard",
   "private": true,
-  "version": "0.0.2",
+  "version": "0.0.3",
   "author": "aspasskiy",
   "description": "Your work with coding agents at a glance: a year-long activity heatmap, weekly stats across agent CLIs, project focus, and an agent-written report of what you shipped and what needs you.",
   "license": "MIT",

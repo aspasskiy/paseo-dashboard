@@ -35,7 +35,7 @@ export function SettingsPanel({
       </View>
       {loading ? <ActivityIndicator color={p.muted} /> : null}
       {!loading && !providers.length ? (
-        <Text style={{ color: p.muted, fontSize: 12 }}>No agent provider is ready in Paseo. Set one up in Paseo's settings first.</Text>
+        <Text style={{ color: p.muted, fontSize: 12 }}>Reports need Claude ready in Paseo. Set it up in Paseo's settings first.</Text>
       ) : null}
       {providers.length
         ? (["notes", "synthesis"] as Stage[]).map((stage, i) => (
@@ -52,7 +52,7 @@ export function SettingsPanel({
           ))
         : null}
       <Text style={{ color: p.muted, fontSize: 12, lineHeight: 16 }}>
-        Both run as Paseo helper agents on your own provider. Notes are cached per session, so a new notes model only affects sessions it has not read.
+        Both run as Paseo helper agents on your own provider, started with no tools: they only read the text they are given. Only providers that enforce this are listed (Claude for now). Notes are cached per session, so a new notes model only affects sessions it has not read.
       </Text>
     </View>
   );

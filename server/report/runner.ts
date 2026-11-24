@@ -3,7 +3,9 @@
  * and the synthesis stage both go through it.
  *
  * A helper is a background agent in an empty folder (so it loads no project's instructions),
- * labelled dashboard=report so the history adapters never count it as the user's work. Each helper
+ * labelled dashboard=report so the history adapters never count it as the user's work. It starts
+ * with no tools (toolfree.ts): its prompt is built from session transcripts, which are untrusted,
+ * and a helper with tools could be steered by them into reading files or running commands. Each helper
  * is deleted when its run ends; the project Paseo registers for the helper folder is removed once
  * no helper of the pool is running (siblings run concurrently in the same folder).
  */
@@ -13,6 +15,7 @@ import { delimiter, join } from "node:path";
 import type { PluginHandlerContext } from "@getpaseo/plugin/server";
 import { runnerConfig, type ResolvedRunner } from "./settings";
 import { helperDir } from "./store";
+import { toolFreeProfile } from "./toolfree";
 import { claudeHome } from "../paths";
 
 type PaseoApi = PluginHandlerContext["paseo"];
@@ -153,6 +156,9 @@ export function paseoRunnerPool(paseo: PaseoApi, log: (msg: string) => void): Ru
 
   const run: Runner = async (req) => {
     if (disposed) throw new Error("The report was cancelled.");
+    // Looked up here again, from the provider id alone: no helper starts without a tool-free profile.
+    const toolFree = toolFreeProfile(req.runner.providerId);
+    if (!toolFree) throw new Error(req.runner.providerLabel + " cannot run a helper without tools, so it cannot write reports.");
     used = true;
     await mkdir(helperDir(), { recursive: true });
     const handle = await paseo.agents.create({
@@ -160,8 +166,10 @@ export function paseoRunnerPool(paseo: PaseoApi, log: (msg: string) => void): Ru
       config: {
         provider: runnerConfig(req.runner),
         systemPrompt: req.systemPrompt,
-        ...(req.runner.safeModeId ? { modeId: req.runner.safeModeId } : {}),
+        modeId: toolFree.modeId,
+        options: toolFree.options,
       },
+      env: toolFree.env,
       title: req.title,
       labels: { dashboard: "report" },
       background: true,
@@ -184,13 +192,19 @@ export function paseoRunnerPool(paseo: PaseoApi, log: (msg: string) => void): Ru
       if (result.status === "timeout") throw new Error("The " + req.stage + " step took longer than " + SECONDS(req.timeoutMs) + " s and was stopped.");
       if (result.status === "permission") throw new Error("The " + req.stage + " helper asked for a permission instead of answering. Try another provider or model.");
       if (result.status === "error") throw new Error("The " + req.stage + " helper failed: " + String(result.error || "unknown error").slice(0, 300));
+      const page = await handle.timeline.refetch({ direction: "tail", limit: 200 });
+      // A helper has no tools, so its timeline holds no tool call. If one shows up anyway, the
+      // restriction did not hold: discard the answer and say so rather than use it.
+      const toolCall = page.entries.find((e) => e.item.type === "tool_call");
+      if (toolCall) {
+        const name = (toolCall.item as { name?: unknown }).name;
+        log(req.stage + " helper " + handle.id + " made a tool call (" + String(name) + ") despite running without tools");
+        throw new Error("The " + req.stage + " helper made a tool call although it runs without tools. The answer was discarded.");
+      }
       let text = result.lastMessage?.trim() ?? "";
-      if (!text) {
-        const page = await handle.timeline.refetch({ direction: "tail", limit: 50 });
-        for (let i = page.entries.length - 1; i >= 0 && !text; i--) {
-          const item = page.entries[i].item;
-          if (item.type === "assistant_message" && item.text.trim()) text = item.text.trim();
-        }
+      for (let i = page.entries.length - 1; i >= 0 && !text; i--) {
+        const item = page.entries[i].item;
+        if (item.type === "assistant_message" && item.text.trim()) text = item.text.trim();
       }
       if (!text) throw new Error("The " + req.stage + " helper finished without an answer.");
       try {

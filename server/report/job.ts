@@ -22,6 +22,7 @@ import { mapLimit } from "../sources/util";
 import { cachedNote, clip, loadNotesCache, packBatches, runNotes, type NoteFields, type NoteItem, type NotesCache } from "./notes";
 import { paseoRunnerPool, type Runner, type RunnerPool } from "./runner";
 import { readSettings, readyProviders, resolveRunner, runnerLabel, type ResolvedRunner } from "./settings";
+import { TOOL_FREE_PROVIDERS } from "./toolfree";
 import { localDay, periodRange, reportsFile, type PeriodRange } from "./store";
 import { buildSynthesisPrompt, normalizeSynthesis, SYNTH_SCHEMA, SYNTH_SYSTEM_PROMPT, SYNTH_TIMEOUT_MS, type ProjectFacts } from "./synthesis";
 
@@ -281,7 +282,10 @@ async function liveRunners(context: PluginHandlerContext): Promise<{ notes: Reso
   const [providers, settings] = await Promise.all([readyProviders(context.paseo), readSettings()]);
   const notes = resolveRunner(providers, settings, "notes");
   const synthesis = resolveRunner(providers, settings, "synthesis");
-  if (!notes || !synthesis) throw new Error("No agent provider is ready in Paseo. Install or sign in to one (Claude, Codex, ...) in Paseo's settings.");
+  if (!notes || !synthesis)
+    throw new Error(
+      "Reports run on a provider that can start a helper with no tools: " + TOOL_FREE_PROVIDERS.join(", ") + ". None is ready in Paseo. Install or sign in to one in Paseo's settings.",
+    );
   return { notes, synthesis };
 }
 
